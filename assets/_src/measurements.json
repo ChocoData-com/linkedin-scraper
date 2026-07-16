@@ -1,0 +1,64 @@
+{
+  "measured_utc": "2026-07-16T20:27:35Z",
+  "seq_ok": 20,
+  "seq_n": 20,
+  "burst_n": 40,
+  "burst_workers": 8,
+  "burst_ok": 30,
+  "burst_429": 10,
+  "burst_secs": 5.7,
+  "burst_recovery_secs": 1,
+  "free_cards": 10,
+  "free_card_fields": 6,
+  "free_search_decoded": 29570,
+  "free_search_wire": 3006,
+  "profile_html_decoded": 601151,
+  "profile_html_wire": 61367,
+  "profile_gzip_ratio": 9.8,
+  "profile_wire_cost_3gb": 0.00018,
+  "profile_wire_cost_8gb": 0.00049,
+  "api_search_decoded": 11802,
+  "api_search_wire": 1682,
+  "api_jobs": 10,
+  "api_list_fields": 12,
+  "api_profile_decoded": 910,
+  "api_profile_wire": 524,
+  "latency": {
+    "jobsearch": {
+      "median": 1.6,
+      "lo": 1.4,
+      "hi": 2.5,
+      "n": 5
+    },
+    "job": {
+      "median": 1.8,
+      "lo": 1.2,
+      "hi": 8.0,
+      "n": 5
+    },
+    "company": {
+      "median": 2.9,
+      "lo": 2.3,
+      "hi": 10.1,
+      "n": 4
+    },
+    "profile": {
+      "median": 2.2,
+      "lo": 1.8,
+      "hi": 3.4,
+      "n": 5
+    },
+    "post": {
+      "median": 1.9,
+      "lo": 1.7,
+      "hi": 4.2,
+      "n": 5
+    },
+    "email": {
+      "median": 3.9,
+      "lo": 1.8,
+      "hi": 5.6,
+      "n": 5
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "401_invalid_api_key": {
+    "request": "GET /linkedin/jobsearch?api_key=totally_invalid_key_123&keywords=python+developer",
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "INVALID_API_KEY",
+        "message": "Api key not recognised."
+      }
+    }
+  },
+  "400_invalid_params": {
+    "request": "GET /linkedin/jobsearch (no keywords)",
+    "status": 400,
+    "body": {
+      "error": "invalid_params",
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "keywords"
+          ],
+          "message": "Required"
+        }
+      ]
+    }
+  },
+  "404_item_not_found": {
+    "request": "GET /linkedin/job?job_id=3800000000",
+    "status": 404,
+    "body": {
+      "error": "item_not_found",
+      "message": "The target returned 404 for this request - the item or identifier does not exist. Check the id or URL. You were not charged.",
+      "attempts": 1,
+      "attempted_tiers": [
+        "paid-residential"
+      ],
+      "retryable": false
+    }
+  },
+  "_note": "Captured 2026-07-16 against the live API. These are the verbatim error bodies quoted in the README's Errors section. Reproduce: see benchmarks/measure.py for the pattern."
+}

@@ -1,0 +1,8 @@
+{
+  "url": "https://www.linkedin.com/company/microsoft/",
+  "is_company": true,
+  "email": null,
+  "website": "https://news.microsoft.com/",
+  "phone": null,
+  "note": "LinkedIn member emails are private (behind the logged-in \"Contact info\" modal) and are essentially never present in the public/logged-out page; only an external website (and rarely a company phone) is publicly exposed."
+}

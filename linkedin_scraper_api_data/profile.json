@@ -1,0 +1,39 @@
+{
+  "id": "williamhgates",
+  "name": "Bill Gates",
+  "headline": "Co-chair",
+  "location": "Seattle, Washington, United States",
+  "about": "Chair of the Gates Foundation. Founder of Breakthrough Energy. Co-founder of Microsoft. Voracious reader. Avid traveler. Active blogger.",
+  "url": "https://www.linkedin.com/in/williamhgates",
+  "image": "https://media.licdn.com/dms/image/v2/D5603AQF-RYZP55jmXA/profile-displayphoto-shrink_200_200/B56ZRi8g.aGsAY-/0/1736826818802?e=2147483647&v=beta&t=bKWfN6UwwtiCqFWsG7rBELbd48qJOAMLdxhBzzkJV0k",
+  "current_company": "Gates Foundation",
+  "followers": 40509945,
+  "connections": null,
+  "experience": [
+    {
+      "title": null,
+      "company": "Gates Foundation",
+      "date_range": null,
+      "location": null
+    },
+    {
+      "title": null,
+      "company": "Breakthrough Energy",
+      "date_range": null,
+      "location": null
+    },
+    {
+      "title": null,
+      "company": "Microsoft",
+      "date_range": null,
+      "location": null
+    }
+  ],
+  "education": [
+    {
+      "school": "Harvard University",
+      "degree": null,
+      "date_range": null
+    }
+  ]
+}
