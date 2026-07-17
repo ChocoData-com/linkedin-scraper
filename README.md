@@ -184,17 +184,9 @@ A missing required param, verbatim. It names the exact field:
 {"error":"invalid_params","issues":[{"code":"invalid_type","expected":"string","received":"undefined","path":["keywords"],"message":"Required"}]}
 ```
 
-A dead job id, verbatim. Note it tells you whether to retry, and that you were not charged:
-
-```json
-{
-  "error": "item_not_found",
-  "message": "The target returned 404 for this request - the item or identifier does not exist. Check the id or URL. You were not charged.",
-  "attempts": 1,
-  "attempted_tiers": ["paid-residential"],
-  "retryable": false
-}
-```
+A dead job id returns `404 item_not_found` with `retryable: false`. The message names the cause and
+confirms you were not charged: `The target returned 404 for this request - the item or identifier
+does not exist. Check the id or URL. You were not charged.`
 
 ### Rate limits and concurrency
 

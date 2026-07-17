@@ -27,18 +27,5 @@
       ]
     }
   },
-  "404_item_not_found": {
-    "request": "GET /linkedin/job?job_id=3800000000",
-    "status": 404,
-    "body": {
-      "error": "item_not_found",
-      "message": "The target returned 404 for this request - the item or identifier does not exist. Check the id or URL. You were not charged.",
-      "attempts": 1,
-      "attempted_tiers": [
-        "paid-residential"
-      ],
-      "retryable": false
-    }
-  },
-  "_note": "Captured 2026-07-16 against the live API. These are the verbatim error bodies quoted in the README's Errors section. Reproduce: see benchmarks/measure.py for the pattern."
+  "_note": "Captured live on 2026-07-16. The 401 and 400 bodies are verbatim and complete. The 404 body is not reproduced here; its status and message are documented in the README."
 }
