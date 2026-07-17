@@ -44,7 +44,7 @@ That is the whole point of this repo. The rest of this page is the free script, 
 - [LinkedIn Scraper API reference](#linkedin-scraper-api-reference)
   - [Quickstart](#quickstart) · [Authentication](#authentication) · [Global parameters](#global-parameters) · [Errors](#errors) · [Rate limits and concurrency](#rate-limits-and-concurrency)
   - [1. Job search](#1-job-search-job-listings-companies-and-posted-dates) · [2. Job](#2-job-full-posting-seniority-employment-type-and-description) · [3. Company](#3-company-company-profile-employee-count-and-industry) · [4. Profile](#4-profile-member-name-headline-and-current-company) · [5. Post](#5-post-post-content-engagement-counts-and-media) · [6. Contact info](#6-contact-info-public-company-website-and-contact-fields)
-- [Job monitoring: a real use case](#job-monitoring-a-real-use-case)
+- [Monitor new LinkedIn job postings](#monitor-new-linkedin-job-postings)
 - [Measured latency](#measured-latency)
 
 ---
@@ -103,7 +103,7 @@ So: the free script is disallowed, and so is the API below. It is your call to m
 
 ### Using the Chocodata LinkedIn Scraper API
 
-The managed option, and the one this repo is built around. Six endpoints for LinkedIn data extraction at scale (job listings, job postings, company profiles, member profiles, posts and public contact fields), parsed JSON instead of the raw page markup, a ~99% success rate, and no proxy management. Free for the first 1,000 requests.
+The managed option, and the one this repo is built around. The [Chocodata LinkedIn Scraper API](https://chocodata.com/scraper-api/linkedin?utm_source=github&utm_medium=repo&utm_campaign=linkedin-scraper) has six endpoints for LinkedIn data extraction at scale (job listings, job postings, company profiles, member profiles, posts and public contact fields), parsed JSON instead of the raw page markup, a ~99% success rate, and no proxy management. Free for the first 1,000 requests.
 
 ---
 
@@ -134,7 +134,7 @@ After running the command, your terminal should look something like this:
 
 ![Running the LinkedIn Scraper API jobsearch endpoint](assets/run-jobsearch.png)
 
-Get a key at [chocodata.com](https://chocodata.com) (1,000 requests, one-time, no card).
+Get a key at chocodata.com (1,000 requests, one-time, no card).
 
 ### Authentication
 
@@ -157,8 +157,8 @@ Real captured error bodies, not paraphrases. Nothing below is billed: **you are 
 | Status | `error` code | Meaning | Billed | What to do |
 |---|---|---|---|---|
 | `400` | `invalid_params` | A required param is missing or the wrong type. Body lists the exact issue and `path`. | no | Fix the query string. |
-| `401` | `INVALID_API_KEY` | Key missing, unrecognised, or revoked. | no | Check `api_key`. Get one at [chocodata.com](https://chocodata.com). |
-| `402` | `INSUFFICIENT_CREDITS` | Balance exhausted. | no | Top up or upgrade at [chocodata.com](https://chocodata.com). |
+| `401` | `INVALID_API_KEY` | Key missing, unrecognised, or revoked. | no | Check `api_key`. Get one at chocodata.com. |
+| `402` | `INSUFFICIENT_CREDITS` | Balance exhausted. | no | Top up or upgrade at chocodata.com. |
 | `404` | `item_not_found` | The target returned 404: the id/URL does not exist or the posting was taken down. `retryable: false`. | no | Fix the id. Retrying will not help. |
 | `429` | `RATE_LIMITED` | Over your plan's concurrency. | no | Back off and retry; see [Rate limits](#rate-limits-and-concurrency). |
 | `502` | `target_unreachable` | LinkedIn refused every attempt for this request. `retryable: true`. | no | Retry. We hit this a few times while writing this page; it clears. |
@@ -550,7 +550,7 @@ Runnable: [`linkedin_scraper_api_codes/contact_info.py`](linkedin_scraper_api_co
 
 ---
 
-## Job monitoring: a real use case
+## Monitor new LinkedIn job postings
 
 Watching for new postings is the main reason people scrape LinkedIn, so that use case is in the repo end to end rather than as a snippet. [`job_monitor.py`](linkedin_scraper_api_codes/job_monitor.py) polls a job search, stores every posting it has ever seen as a local dataset in SQLite, optionally enriches each new one with seniority and employment type, and prints only what is new since the last run:
 
