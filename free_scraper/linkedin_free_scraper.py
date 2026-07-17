@@ -8,17 +8,17 @@ headless browser, a login, or JavaScript rendering.
     pip install requests
     python free_scraper/linkedin_free_scraper.py "python developer" "United States"
 
-This is the honest DIY baseline, and the honest result is that it works. Run against
-linkedin.com on 2026-07-16 from a clean residential IP it returned 10 job cards on 20 of
-20 sequential attempts. What it will not do is scale: 40 calls at 8 concurrent from the
-same IP produced 8 x HTTP 429. See "Avoid getting blocked when scraping LinkedIn" in the
-README for the full measurement.
+Fetches the guest job-search endpoint with plain requests and parses what comes back.
+Run against linkedin.com on 2026-07-16 from a clean residential IP it returned 10 job
+cards on 20 of 20 sequential attempts. What it will not do is scale: 40 calls at 8
+concurrent from the same IP produced 8 x HTTP 429. See "Avoid getting blocked when
+scraping LinkedIn" in the README for the full measurement.
 
 Note before you point it at anything: LinkedIn's robots.txt disallows /jobs-guest/, the
 path this script calls. That is your call to make, and you should make it knowingly.
 
-It parses FIRST and only calls something a block when the job cards are genuinely absent,
-so it cannot cry wolf about anti-bot strings that appear in normal page JavaScript. When
+It parses FIRST and only reports a block when the job cards are genuinely absent, so it
+does not false-positive on anti-bot strings that appear in normal page JavaScript. When
 it is blocked it says why, instead of silently returning an empty list.
 """
 import json

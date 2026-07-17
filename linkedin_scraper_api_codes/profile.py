@@ -3,10 +3,9 @@ LinkedIn Profile - Chocodata LinkedIn Scraper API
 
 Public member profile by username: name, headline, location, about, current company.
 
-Read the ceiling in the README before you build on this: LinkedIn does not render job
-titles, date ranges or degrees on the logged-out profile page, so `experience[].title`,
-`experience[].date_range` and `education[].degree` come back null. We return the public
-surface verbatim rather than inventing the parts LinkedIn withholds.
+Note: LinkedIn does not render job titles, date ranges or degrees on the logged-out
+profile page, so `experience[].title`, `experience[].date_range` and
+`education[].degree` come back null. We return the public surface verbatim.
 
     pip install requests
     export CHOCODATA_API_KEY="your_key"      # free: 1,000 requests, one-time

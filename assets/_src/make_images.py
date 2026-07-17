@@ -143,8 +143,8 @@ def hero():
 
 
 def evidence():
-    """The honest side-by-side. The free path WORKS here: that is the real finding, and the
-    argument is throughput and parsing, not a bot wall.
+    """Side by side. The free path works here, so the comparison is throughput and
+    parsing, not a bot wall.
 
     Both panels describe the SAME operation (one job search for "python developer") so the
     rows compare like with like. Wire bytes are the compressed transfer measured with
