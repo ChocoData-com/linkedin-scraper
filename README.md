@@ -32,7 +32,7 @@ Those three lines return this, live from LinkedIn.com (7 of the 12 fields on the
 
 ![Retrieved LinkedIn job listings](assets/retrieved-data.png)
 
-That is the whole point of this repo. The rest of this page is how it works, what it costs, and where it stops.
+That is the whole point of this repo. The rest of this page is the free script, the measured evidence behind it, and the full API reference.
 
 ---
 
@@ -45,7 +45,6 @@ That is the whole point of this repo. The rest of this page is how it works, wha
   - [Quickstart](#quickstart) · [Authentication](#authentication) · [Global parameters](#global-parameters) · [Errors](#errors) · [Rate limits and concurrency](#rate-limits-and-concurrency)
   - [1. Job search](#1-job-search-job-listings-companies-and-posted-dates) · [2. Job](#2-job-full-posting-seniority-employment-type-and-description) · [3. Company](#3-company-company-profile-employee-count-and-industry) · [4. Profile](#4-profile-member-name-headline-and-current-company) · [5. Post](#5-post-post-content-engagement-counts-and-media) · [6. Contact info](#6-contact-info-public-company-website-and-contact-fields)
 - [Job monitoring: a real use case](#job-monitoring-a-real-use-case)
-- [Build vs buy: what this actually costs](#build-vs-buy-what-this-actually-costs)
 - [Measured latency](#measured-latency)
 
 ---
@@ -64,13 +63,13 @@ After running the command, your terminal should look something like this:
 
 ![Free LinkedIn scraper returning job listings](assets/run-free.png)
 
-**It works.** That is the honest result, and it is worth saying plainly because most vendor READMEs would rather show you a fake block screen here. From a clean residential IP on 2026-07-16 it returned 10 job cards on 20 of 20 sequential attempts.
+**It works.** From a clean residential IP on 2026-07-16 it returned 10 job cards on 20 of 20 sequential attempts.
 
 So why does the rest of this page exist? Because "it works" and "it scales" are different claims, and the gap between them is the whole product. The next section is the measured version of that gap.
 
 ## Avoid getting blocked when scraping LinkedIn
 
-The wall is not where people expect it. LinkedIn did not serve us a bot check, a CAPTCHA, or a 403. It served real data, until we asked for real volume. Here is the raw evidence, so you do not have to take our word for it. Every row is produced by [`benchmarks/measure.py`](benchmarks/measure.py), which is in this repo: run it and you get your own version of this table.
+The wall is not where people expect it. LinkedIn did not serve us a bot check, a CAPTCHA, or a 403. It served real data, until we asked for real volume. Every row below is produced by [`benchmarks/measure.py`](benchmarks/measure.py), which is in this repo: run it and you get your own version of this table.
 
 | What we measured (2026-07-16, one clean residential IP) | Value |
 |---|---|
@@ -79,8 +78,6 @@ The wall is not where people expect it. LinkedIn did not serve us a bot check, a
 | Recovery after a 429 | **~1s** of sequential polling. It is a throttle, not a ban. |
 | Fields per free job card | **6** |
 | Job description on the card | **absent** (needs a second fetch per job) |
-| One guest call | 29,570 characters, **3,006 bytes on the wire** |
-| One public profile page | 601,151 characters, **61,367 bytes on the wire** (gzips 9.8x) |
 
 ![Free scraper vs Chocodata API, measured side by side](assets/free-vs-api.png)
 
@@ -89,30 +86,30 @@ The wall is not where people expect it. LinkedIn did not serve us a bot check, a
 | What bites you | Why | What it costs you |
 |---|---|---|
 | **Concurrency, not access** | The guest endpoint answered 20 of 20 sequential calls. Fan out to 8 workers and the 429s start immediately. It is a throughput ceiling, not a ban. | Your scraper works perfectly on your laptop and falls over the day you parallelise it. The failure arrives in production, not in dev. |
-| **You get HTML, not data** | A public profile page is 601,151 characters of markup and inline JSON. The fields you actually wanted are 910 characters of it. | You write and maintain a parser per surface, forever, and re-do it every time LinkedIn reshapes the page. (The bandwidth is cheap: it gzips to 61,367 bytes. See [build vs buy](#build-vs-buy-what-this-actually-costs), where we argue against ourselves on this.) |
+| **You get HTML, not data** | A public profile page is 601,151 characters of markup and inline JSON. The fields you actually wanted are 910 characters of it. | You write and maintain a parser per surface, forever, and re-do it every time LinkedIn reshapes the page. |
 | **Job cards are not job postings** | The search card has 6 fields. No description, no seniority, no employment type, no applicant count. Those live on the posting page. | One extra fetch and parse per job, which is exactly where the request volume (and the 429s) come from. |
-| **The public surface is a subset** | LinkedIn does not render job titles or date ranges on the logged-out profile page at all. | Nobody reading the public page can give you full employment history, us included. See the [profile ceiling](#4-profile-member-name-headline-and-current-company). |
+| **The public surface is a subset** | LinkedIn does not render job titles or date ranges on the logged-out profile page at all. | What any public scrape returns is company names and headlines, not a dated employment history. See [`/linkedin/profile`](#4-profile-member-name-headline-and-current-company). |
 | **The markup moves** | The guest card classes and the JSON shapes change without notice. Your parser silently returns `[]`. | Ongoing maintenance, plus alerting smart enough to tell "no results" from "broken". |
 
 Two things worth knowing before you go shopping for a free alternative.
 
-The first is that the most popular free LinkedIn scraper on GitHub, [`joeyism/linkedin_scraper`](https://github.com/joeyism/linkedin_scraper) (4,327 stars, actively maintained), takes a different route: it drives a real browser and requires you to log in. Its docs are explicit that "LinkedIn requires authentication" and it offers `login_with_credentials()` for your email and password. That is not a knock on the code, which does more than the script in this repo can. It is a trade you should make deliberately: logged-in scraping sees the fields the public page withholds, and it puts *your* account on the line. Nothing in this repo logs in, which is precisely why our profile data stops where it does.
+The first is that the most popular free LinkedIn scraper on GitHub, [`joeyism/linkedin_scraper`](https://github.com/joeyism/linkedin_scraper) (4,327 stars, actively maintained), takes a different route: it drives a real browser and requires you to log in. Its docs are explicit that "LinkedIn requires authentication" and it offers `login_with_credentials()` for your email and password. That is not a knock on the code, which does more than the script in this repo can. It is a trade you should make deliberately: logged-in scraping sees the fields the public page withholds, and it puts *your* account on the line. Nothing in this repo logs in.
 
 The second is that LinkedIn's own `robots.txt` disallows all of it, and it is worth reading rather than paraphrasing. The `User-agent: *` block, in its entirety, is two lines: `User-agent: *` followed by `Disallow: /`. Everything. The other 75 blocks name specific crawlers LinkedIn has chosen to allow, and 40 of those (Googlebot included) are still disallowed from `/jobs-guest/` specifically, which is the exact path the free script above calls. The file also states that "the use of robots or other automated means to access LinkedIn without the express permission of LinkedIn is strictly prohibited", pointing to [their user agreement](https://www.linkedin.com/legal/user-agreement) and publishing a whitelisting address to request permission ([robots.txt](https://www.linkedin.com/robots.txt), retrieved 2026-07-16).
 
-So: the free script is disallowed, and so is the API below. We are not going to pretend otherwise or bury it in a footnote. It is your call to make, and you should make it with the actual text in front of you rather than discover it later.
+So: the free script is disallowed, and so is the API below. It is your call to make, and worth making with the actual text in front of you rather than discovering it later.
 
 ---
 
 ### Using the Chocodata LinkedIn Scraper API
 
-The managed option, and the one this repo is built around. Six endpoints for LinkedIn data extraction at scale (job listings, job postings, company profiles, member profiles, posts and public contact fields), parsed JSON instead of 574 KB of HTML, a ~99% success rate, and no proxy management. Free for the first 1,000 requests.
+The managed option, and the one this repo is built around. Six endpoints for LinkedIn data extraction at scale (job listings, job postings, company profiles, member profiles, posts and public contact fields), parsed JSON instead of the raw page markup, a ~99% success rate, and no proxy management. Free for the first 1,000 requests.
 
 ---
 
 ## LinkedIn Scraper API reference
 
-Every response below is real. No login, no browser.
+Below is the LinkedIn Scraper API reference to get you started: authentication, the global parameter, error handling, concurrency, and the six endpoints.
 
 ### Quickstart
 
@@ -161,7 +158,7 @@ Real captured error bodies, not paraphrases. Nothing below is billed: **you are 
 |---|---|---|---|---|
 | `400` | `invalid_params` | A required param is missing or the wrong type. Body lists the exact issue and `path`. | no | Fix the query string. |
 | `401` | `INVALID_API_KEY` | Key missing, unrecognised, or revoked. | no | Check `api_key`. Get one at [chocodata.com](https://chocodata.com). |
-| `402` | `INSUFFICIENT_CREDITS` | Balance exhausted. | no | Top up ($0.90 / 1,000 requests, never expires) or upgrade. |
+| `402` | `INSUFFICIENT_CREDITS` | Balance exhausted. | no | Top up or upgrade at [chocodata.com](https://chocodata.com). |
 | `404` | `item_not_found` | The target returned 404: the id/URL does not exist or the posting was taken down. `retryable: false`. | no | Fix the id. Retrying will not help. |
 | `429` | `RATE_LIMITED` | Over your plan's concurrency. | no | Back off and retry; see [Rate limits](#rate-limits-and-concurrency). |
 | `502` | `target_unreachable` | LinkedIn refused every attempt for this request. `retryable: true`. | no | Retry. We hit this a few times while writing this page; it clears. |
@@ -212,7 +209,7 @@ There is no per-minute request cap. The limit is **concurrency**: how many reque
 
 Exceed it and you get `429`, not a queue. Every endpoint is a **synchronous GET**: there is no webhook, callback, or async job to poll. A request can take up to ~10s when LinkedIn forces a re-attempt (see [Measured latency](#measured-latency)), which is why the examples use `timeout=90`.
 
-Sizing: at Pro (50 concurrent) and a ~1.5s median job search, one worker pool sustains roughly 50 / 1.5 = **33 requests/second**, so 82,000 requests is about 41 minutes of saturated pulling. Fan out with a thread pool:
+Sizing: at Pro (50 concurrent) and the measured 1.6s median job search, one worker pool sustains roughly 50 / 1.6 = **31 requests/second**, so 100,000 requests is about 54 minutes of saturated pulling. Fan out with a thread pool:
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
@@ -241,7 +238,7 @@ Ranked LinkedIn job listings for a keyword and location, with company, company U
 | `keywords` | string | **yes** | - | Search keywords (e.g. `python developer`). |
 | `location` | string | no | - | Geography to search, as LinkedIn spells it (e.g. `United States`, `Germany`). |
 | `start` | int | no | `0` | Offset for paging. `start=10` is page 2. |
-| `limit` | int | no | `10` | Listings to return. See the ceiling below. |
+| `limit` | int | no | `10` | Listings to return. Caps at 10; page with `start` for more. |
 
 ```bash
 curl "https://api.chocodata.com/api/v1/linkedin/jobsearch?api_key=YOUR_KEY&keywords=python%20developer&location=United%20States"
@@ -294,13 +291,12 @@ curl "https://api.chocodata.com/api/v1/linkedin/jobsearch?api_key=YOUR_KEY&keywo
 
 `job_id` is the field most people come for: it is the key you feed to [`/linkedin/job`](#2-job-full-posting-seniority-employment-type-and-description) for the description and seniority, and it is the join key for tracking one posting over time. `posted_date` is a real ISO date (LinkedIn only shows you "2 days ago" on the page), which is what makes a diff-based monitor possible.
 
-Five things to know before you build on this, none of which are in a competitor's docs:
+Four things to know before you build on this, none of which are in a competitor's docs:
 
-- **This endpoint is our weakest case against the free script, so here is the arithmetic.** It returns 12 fields where the free card gives 6, but that 2x is not real: `id` is byte-identical to `job_id` on all 10 rows, `salary` is null on all 10, and `posted_label` ("2 days ago") is just a lossy rendering of `posted_date`. The genuinely new, populated fields are **three**: `position`, `company_url` and `company_logo`. If job search is all you need, the honest answer is that [the free script](#free-linkedin-scraper) gets you most of the way and you should use it. What you are actually buying starts at [`/linkedin/job`](#2-job-full-posting-seniority-employment-type-and-description), where the description lives, and at concurrency.
 - **`total_results` is not a corpus total.** It equals the number of rows returned, so `limit=3` gives `total_results: 3`. It tells you nothing about how many jobs LinkedIn has for the query. Do not size a crawl with it.
-- **`jobs` is a byte-identical duplicate of `results`.** Every payload carries both. Pick one; do not count both.
+- **`jobs` is a byte-identical duplicate of `results`, and `id` duplicates `job_id`.** Every payload carries both of each. Pick one of each pair; do not count both.
 - **`salary` was null on 10 of 10 listings** in this capture, and it is null on most LinkedIn cards, because LinkedIn only renders a salary when the poster supplied one. It is a real field, not a reliable one.
-- **Ceiling:** `limit` above 10 does not get you more. We asked for 25 and 50 and got 10 both times. Page with `start` instead (`start=10`, `start=20`, ...), which we verified returns fresh non-overlapping listings to at least `start=50`. Repeat calls for the same query can also return a different slice: LinkedIn rotates its guest results, so a monitor sees new rows on a re-run even when nothing was posted.
+- **`limit` caps at 10.** We asked for 25 and 50 and got 10 both times. Page with `start` instead (`start=10`, `start=20`, ...), which we verified returns fresh non-overlapping listings to at least `start=50`. Repeat calls for the same query can also return a different slice: LinkedIn rotates its guest results, so a monitor sees new rows on a re-run even when nothing was posted.
 
 `/linkedin/search` is an alias of this endpoint: same parameters, same response object, and it additionally accepts `q` as a synonym for `keywords`. It returns job listings, not people or content. It is documented here rather than as a seventh endpoint because that is all it is.
 
@@ -351,7 +347,7 @@ Running it:
 
 ![LinkedIn job endpoint output](assets/run-job.png)
 
-**Ceiling:** one call returns one posting, so enriching a search costs one request per job on top of the search itself. That is the real budget line for any monitoring job. A posting taken down between your search and your fetch returns `404 item_not_found` rather than stale data, which is correct but means your enrichment loop has to tolerate it (the one in this repo does).
+One call returns one posting, so enriching a search costs one request per job on top of the search itself. Size any monitoring job on that. A posting taken down between your search and your fetch returns `404 item_not_found` rather than stale data, so your enrichment loop has to tolerate it (the one in this repo does).
 
 Runnable: [`linkedin_scraper_api_codes/job.py`](linkedin_scraper_api_codes/job.py)
 
@@ -391,7 +387,7 @@ curl "https://api.chocodata.com/api/v1/linkedin/company?api_key=YOUR_KEY&company
 
 `employee_count` (233,210) is the number people come for: it is LinkedIn's own count of members who list this company, and tracking it over time is a headcount signal you cannot buy cleanly anywhere else. Note it is not the same thing as `company_size` ("10,001+ employees"), which is the self-reported band the company picked.
 
-**Ceiling:** `founded` is `null` here. That is not a parse failure: Microsoft does not render a founded year on its public page, so we return null rather than invent one. It is populated when LinkedIn shows it (Stripe returns `2010`, NVIDIA `1993`). The same applies to `headquarters` and `specialties` on companies that leave them blank. Code against the nulls.
+`founded` is `null` here. That is not a parse failure: Microsoft does not render a founded year on its public page, so we return null rather than invent one. It is populated when LinkedIn shows it (Stripe returns `2010`, NVIDIA `1993`). The same applies to `headquarters` and `specialties` on companies that leave them blank. Code against the nulls.
 
 Runnable: [`linkedin_scraper_api_codes/company.py`](linkedin_scraper_api_codes/company.py)
 
@@ -456,13 +452,9 @@ curl "https://api.chocodata.com/api/v1/linkedin/profile?api_key=YOUR_KEY&usernam
 
 ![LinkedIn profile endpoint output](assets/run-profile.png)
 
-**Ceiling, read this before you buy.** Those nulls are the entire story of this endpoint, so we put them in the sample rather than hiding behind a prettier profile.
+`current_company` plus `followers` is the pair worth having: a member resolved to a live employer with an audience size attached, which is what makes this usable as an enrichment step.
 
-`experience[].title`, `experience[].date_range`, `experience[].location` and `education[].degree` come back **null on every profile we tested** (we checked williamhgates, satyanadella, jeffweiner08, reidhoffman and melindagates: 0 titles and 0 dates populated across 23 experience entries). `connections` is null on some profiles and `500+` on others.
-
-This is not a bug we are working around. LinkedIn does not render job titles or date ranges on the logged-out profile page, and this API never logs in. You get the company names, the school names, the headline, the about text and the follower count, which is enough to resolve and enrich a person. It is **not** enough to reconstruct an employment history with dates.
-
-If you need titles and dates, no public scrape will give them to you. The tools that do are driving a logged-in session with somebody's account, which is a different product with a different risk profile ([see above](#avoid-getting-blocked-when-scraping-linkedin)). **If full work history is your use case, this endpoint will not do it and you should not buy for that.**
+`experience[].title`, `experience[].date_range`, `experience[].location` and `education[].degree` come back **null on every profile we tested** (we checked williamhgates, satyanadella, jeffweiner08, reidhoffman and melindagates: 0 titles and 0 dates populated across 23 experience entries). `connections` is null on some profiles and `500+` on others. LinkedIn does not render job titles or date ranges on the logged-out profile page, and this API never logs in, so what the endpoint returns is the company names, the school names, the headline, the about text and the follower count. Code against the nulls.
 
 Runnable: [`linkedin_scraper_api_codes/profile.py`](linkedin_scraper_api_codes/profile.py)
 
@@ -516,9 +508,9 @@ curl "https://api.chocodata.com/api/v1/linkedin/post?api_key=YOUR_KEY&url=https:
 }
 ```
 
-`engagement.likes` plus `postedAt` is the pair worth having: an exact ISO timestamp against a like count lets you measure decay, which the page itself never shows you. Note this endpoint returns **camelCase** keys (`postAuthor`, `postId`, `postedAt`) while the rest of the API is snake_case. That is a real inconsistency in our API and you have to code around it today; we would rather tell you than let you find out in a debugger.
+`engagement.likes` plus `postedAt` is the pair worth having: an exact ISO timestamp against a like count lets you measure decay, which the page itself never shows you. Note this endpoint returns **camelCase** keys (`postAuthor`, `postId`, `postedAt`) while the rest of the API is snake_case. Code against that.
 
-**Ceiling:** `shares` and `views` are null and `comments` is an empty array even though this post has 364 of them. LinkedIn does not render the comment bodies or share/view counts on the logged-out page, so the counts you get are likes and comments only, and no comment text. `content_markdown` is null on every post we captured. If you need comment threads, this endpoint does not return them.
+`shares` and `views` are null and `comments` is an empty array even though this post has 364 of them: LinkedIn does not render comment bodies or share and view counts on the logged-out page, so the engagement you get is the like and comment counts, without the comment text. `content_markdown` is null on every post we captured.
 
 Runnable: [`linkedin_scraper_api_codes/post.py`](linkedin_scraper_api_codes/post.py)
 
@@ -550,11 +542,9 @@ curl "https://api.chocodata.com/api/v1/linkedin/email?api_key=YOUR_KEY&url=https
 }
 ```
 
-**Ceiling, read this before you buy: this endpoint does not find member email addresses, and neither does anyone else's public scrape.** `email` was null on every page we tested. Member emails sit behind the logged-in "Contact info" modal and are simply not in the public HTML, which is why the response ships a `note` field saying so in the payload itself rather than quietly returning null and letting you assume you queried it wrong.
+`website` is the field this endpoint delivers: a company's external domain, populated on 6 of 6 companies we checked (Microsoft, Stripe, NVIDIA, OpenAI, Shopify, Airbnb). Treat it as "resolve a LinkedIn company page to its real domain", which is a genuinely useful step in an enrichment pipeline.
 
-What it does return reliably is a company's external `website`: populated on 6 of 6 companies we checked (Microsoft, Stripe, NVIDIA, OpenAI, Shopify, Airbnb). Treat this as "resolve a LinkedIn company page to its real domain", which is a genuinely useful step in an enrichment pipeline, and not as an email finder. `phone` was null on all of them.
-
-If you came here for a LinkedIn email scraper, this is the honest answer: buy this for domain resolution, not for emails.
+`email` and `phone` were null on every page we tested. Member emails sit behind the logged-in "Contact info" modal and are not in the public HTML, which is why the response ships a `note` field saying so in the payload itself rather than returning a bare null and letting you assume you queried it wrong.
 
 Runnable: [`linkedin_scraper_api_codes/contact_info.py`](linkedin_scraper_api_codes/contact_info.py)
 
@@ -582,42 +572,9 @@ Export the dataset whenever you want, no lock-in:
 sqlite3 -header -csv linkedin_jobs.db "SELECT * FROM postings;" > jobs.csv
 ```
 
-Cost, and do this arithmetic before you start: the script pulls **2 pages per run, so 2 requests per run**, plus 1 per new job with `--enrich`. Hourly checks on a single query is 24 runs a day, so **48 requests a day, and the 1,000 free requests are gone in about 20 days** (not "a month", and enrichment eats it faster). Drop to every 4 hours and one query runs for four months on the free tier.
+Do this arithmetic before you start: the script pulls **2 pages per run, so 2 requests per run**, plus 1 per new job with `--enrich`. Hourly checks on a single query is 24 runs a day, so **48 requests a day, and the 1,000 free requests are gone in about 20 days** (enrichment eats it faster). Drop to every 4 hours and the same query runs for about 80 days on the free tier.
 
-One honest note visible in that second run: 10 of 20 listings were "new" on an immediate re-run, because LinkedIn rotates which slice of results the guest surface returns rather than because 10 jobs were posted in a minute. Dedupe on `job_id` (the script does) and treat the first day of any monitor as a warm-up, not a signal.
-
----
-
-## Build vs buy: what this actually costs
-
-Most scraper READMEs skip this analysis. Here are the numbers, with assumptions stated so you can argue with them. Note the honest starting point: **the free path works**, so this is a throughput and maintenance calculation, not a "you literally cannot get the data" one.
-
-**Building it yourself**
-
-| Line item | Realistic estimate | Notes |
-|---|---|---|
-| Initial build | 2 to 4 dev days | Card parser, posting parser, profile parser, paging, backoff, alerting. Each surface is its own parser. |
-| Residential proxies | ~$3 to $8/GB retail | Not optional once you fan out: we measured 10 x HTTP 429 from a single IP at 8 concurrent. Throughput is bought in IPs. |
-| Bandwidth per profile | **~61 KB on the wire** | Measured 2026-07-16: a profile page is 601,151 characters that gzip **9.8x** to 61,367 bytes. Proxies bill the compressed transfer, not the decoded size, so at $3 to $8/GB this is **$0.00018 to $0.00049 per fetch**. |
-| Bandwidth per job search | **~3 KB on the wire** | 29,570 characters, 3,006 bytes compressed. Nearly free, and you still need one posting fetch per job to get the description. |
-| Maintenance | ~1 to 2 days per break | Guest card markup and profile JSON shapes move without notice. Plus the on-call cost of noticing. |
-| Silent-failure risk | hard to price | The expensive failure is not a 429. It is a parser that returns `[]` for three weeks and looks like "no new jobs". |
-
-**Buying it**
-
-| Plan | Price | Requests | Effective per 1,000 |
-|---|---|---|---|
-| Free | $0 | 1,000 (one-time) | - |
-| Vibe | $19/mo | 27,000/mo | $0.70 |
-| Pro | $49/mo | 82,000/mo | $0.60 |
-| Custom | from $100/mo | from 200,000/mo | $0.50 flat |
-| Pay-as-you-go top-up | $0.90 / 1,000 | never expires | $0.90 |
-
-The comparison that matters, and we are going to argue against ourselves for a second. At Pro a parsed LinkedIn response costs about **$0.0006**. Fetching that same profile page yourself costs **$0.00018 to $0.00049** in residential bandwidth. **The raw bytes are cheaper than we are, at every proxy rate in that band.** Anyone telling you a managed LinkedIn call beats the bandwidth of doing it yourself is quoting the uncompressed page size at you: LinkedIn gzips 9.8x, proxies bill the compressed transfer, and one `curl -w '%{size_download}'` settles it. **Bandwidth alone does not make the case here, and we are not going to pretend it does.**
-
-What actually decides it is everything sitting next to the bytes: the 2 to 4 days to build three parsers, the 1 to 2 days every time LinkedIn reshapes a surface, the 10-in-40 throttle you have to buy IPs to get past, the alerting you have to write to tell "throttled" from "no new jobs", and the weeks of silently empty data you eat when you get that wrong. That is the bill. The bytes were never the bill.
-
-Which means the honest boundary sits further toward "build it" than a vendor page would like: if you need one query checked once a day, the free script in this repo is genuinely the right answer and you should use it instead of paying us. Build it yourself when scraping is your product. Buy it when scraping is a dependency of your product.
+One thing visible in that second run: 10 of 20 listings were "new" on an immediate re-run, because LinkedIn rotates which slice of results the guest surface returns rather than because 10 jobs were posted in a minute. Dedupe on `job_id` (the script does) and treat the first day of any monitor as a warm-up, not a signal.
 
 ---
 
@@ -636,7 +593,7 @@ Real end-to-end wall-clock, measured from a laptop against the live API on 2026-
 
 Read the ranges, not just the medians. The 10.1s on `/linkedin/company` and the 8.0s on `/linkedin/job` are the interesting numbers: those are requests that ran into a refusal upstream and were re-attempted until real data came back. Absorbing that, silently, is a good part of what you are paying for.
 
-Note `n=4` on `/linkedin/company`: the fifth call returned a `502 target_unreachable` and is not in the median, which is also why that status is documented rather than hidden. That is 1 hard failure in 29 timed calls on the day we measured, and we are showing you the gap rather than quietly running it again until we got five. Small sample; run `benchmarks/measure.py` and use your own numbers.
+Note `n=4` on `/linkedin/company`: the fifth call returned a `502 target_unreachable`, so it is excluded from the median rather than folded into it. Small sample; run `benchmarks/measure.py` and use your own numbers.
 
 ---
 
