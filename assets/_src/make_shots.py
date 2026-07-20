@@ -171,7 +171,7 @@ if __name__ == "__main__":
     shot_table()
     shot_generic("job.out", "run-job.png", "linkedin_scraper_api_codes/job.py 4437608828")
     shot_generic("profile.out", "run-profile.png", "linkedin_scraper_api_codes/profile.py williamhgates",
-                 note=["# the nulls are real: LinkedIn does not render titles or dates",
+                 note=["# the nulls are real: this endpoint returns title and date_range as null",
                        "# on the logged-out profile page, so we do not invent them."])
     shot_generic("monitor1.out", "run-monitor.png",
                  'linkedin_scraper_api_codes/job_monitor.py "python developer" "United States" --enrich', keep=10)

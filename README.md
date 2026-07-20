@@ -88,7 +88,7 @@ The wall is not where people expect it. LinkedIn did not serve us a bot check, a
 | **Concurrency, not access** | The guest endpoint answered 20 of 20 sequential calls. Fan out to 8 workers and the 429s start immediately. It is a throughput ceiling, not a ban. | Your scraper works perfectly on your laptop and falls over the day you parallelise it. The failure arrives in production, not in dev. |
 | **You get HTML, not data** | A public profile page is 601,151 characters of markup and inline JSON. The fields you actually wanted are 910 characters of it. | You write and maintain a parser per surface, forever, and re-do it every time LinkedIn reshapes the page. |
 | **Job cards are not job postings** | The search card has 6 fields. No description, no seniority, no employment type, no applicant count. Those live on the posting page. | One extra fetch and parse per job, which is exactly where the request volume (and the 429s) come from. |
-| **The public surface is a subset** | LinkedIn does not render job titles or date ranges on the logged-out profile page at all. | What any public scrape returns is company names and headlines, not a dated employment history. See [`/linkedin/profile`](#4-profile-member-name-headline-and-current-company). |
+| **The public surface is a subset** | Job titles, date ranges and education details come back null on every profile we sampled. | What any public scrape returns is company names and headlines, not a dated employment history. See [`/linkedin/profile`](#4-profile-member-name-headline-and-current-company). |
 | **The markup moves** | The guest card classes and the JSON shapes change without notice. Your parser silently returns `[]`. | Ongoing maintenance, plus alerting smart enough to tell "no results" from "broken". |
 
 Two things worth knowing before you go shopping for a free alternative.
@@ -446,7 +446,7 @@ curl "https://api.chocodata.com/api/v1/linkedin/profile?api_key=YOUR_KEY&usernam
 
 `current_company` plus `followers` is the pair worth having: a member resolved to a live employer with an audience size attached, which is what makes this usable as an enrichment step.
 
-`experience[].title`, `experience[].date_range`, `experience[].location` and `education[].degree` come back **null on every profile we tested** (we checked williamhgates, satyanadella, jeffweiner08, reidhoffman and melindagates: 0 titles and 0 dates populated across 23 experience entries). `connections` is null on some profiles and `500+` on others. LinkedIn does not render job titles or date ranges on the logged-out profile page, and this API never logs in, so what the endpoint returns is the company names, the school names, the headline, the about text and the follower count. Code against the nulls.
+`experience[].title`, `experience[].date_range`, `experience[].location` and `education[].degree` come back **null on every profile we tested** (we checked williamhgates, satyanadella, jeffweiner08, reidhoffman and melindagates: 0 titles and 0 dates populated across 23 experience entries). `connections` is null on some profiles and `500+` on others. This API never logs in, and what the endpoint returns is the company names, the school names, the headline, the about text and the follower count. Code against the nulls.
 
 Runnable: [`linkedin_scraper_api_codes/profile.py`](linkedin_scraper_api_codes/profile.py)
 
@@ -502,7 +502,7 @@ curl "https://api.chocodata.com/api/v1/linkedin/post?api_key=YOUR_KEY&url=https:
 
 `engagement.likes` plus `postedAt` is the pair worth having: an exact ISO timestamp against a like count lets you measure decay, which the page itself never shows you. Note this endpoint returns **camelCase** keys (`postAuthor`, `postId`, `postedAt`) while the rest of the API is snake_case. Code against that.
 
-`shares` and `views` are null and `comments` is an empty array even though this post has 364 of them: LinkedIn does not render comment bodies or share and view counts on the logged-out page, so the engagement you get is the like and comment counts, without the comment text. `content_markdown` is null on every post we captured.
+`shares` and `views` are null and `comments` is an empty array even though this post has 364 of them: The engagement this endpoint returns is the like and comment counts, without the comment text. `content_markdown` is null on every post we captured.
 
 Runnable: [`linkedin_scraper_api_codes/post.py`](linkedin_scraper_api_codes/post.py)
 
